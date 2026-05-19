@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#1A3A5C">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="CardioLog">
+  <meta name="description" content="Suivi personnel de tension artérielle">
+  <title>CardioLog</title>
+
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="icon" type="image/png" href="icons/icon-192.png">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Nunito:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+
+  <!-- Firebase v10 compat -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+  <!-- ── LOADING OVERLAY ── -->
+  <div id="loading-overlay" class="loading-overlay">
+    <div class="loading-pulse">
+      <svg viewBox="0 0 60 60" fill="none">
+        <polyline points="4,30 14,30 19,16 28,44 35,22 41,30 56,30"
+          stroke="#E05E44" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+  </div>
+
+  <!-- ── TOAST ── -->
+  <div id="toast" class="toast hidden"></div>
+
+  <!-- ════════════════════════════════
+       LOGIN SCREEN
+  ════════════════════════════════ -->
+  <div id="screen-login" class="screen-full hidden">
+    <div class="login-bg"></div>
+    <div class="login-container">
+      <div class="login-hero">
+        <div class="login-icon">
+          <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="40" cy="40" r="37" stroke="#E05E44" stroke-width="1.5" stroke-dasharray="4 3" opacity="0.4"/>
+            <path d="M40 18C40 18 20 29 20 45C20 54.9 29.1 61 40 55C50.9 61 60 54.9 60 45C60 29 40 18 40 18Z"
+              fill="#E05E44" opacity="0.08" stroke="#E05E44" stroke-width="1.5"/>
+            <polyline points="22,46 28,46 32,36 40,56 46,40 51,46 58,46"
+              stroke="#E05E44" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <h1 class="login-title">CardioLog</h1>
+        <p class="login-sub">Suivi de tension artérielle</p>
+      </div>
+      <div class="login-card">
+        <div class="input-group">
+          <label class="input-label">Adresse email</label>
+          <input id="login-email" type="email" inputmode="email"
+            autocomplete="email" placeholder="votre@email.com" class="text-input">
+        </div>
+        <div class="input-group">
+          <label class="input-label">Mot de passe</label>
+          <input id="login-password" type="password"
+            autocomplete="current-password" placeholder="••••••••" class="text-input">
+        </div>
+        <p id="login-error" class="error-msg hidden"></p>
+        <button id="btn-login" class="btn-primary btn-full">
+          <span>Se connecter</span>
+        </button>
+        <p class="login-hint">Accès réservé — compte unique</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════
+       MAIN APP SHELL
+  ════════════════════════════════ -->
+  <div id="app" class="hidden">
+
+    <!-- ── HOME SCREEN ── -->
+    <div id="screen-home" class="screen active">
+      <header class="screen-header">
+        <div class="header-left">
+          <p class="header-greeting" id="header-greeting">Bonjour</p>
+          <h2 class="header-date" id="header-date"></h2>
+        </div>
+        <button id="btn-logout" class="icon-btn" title="Déconnexion" aria-label="Déconnexion">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
+            <polyline points="16,17 21,12 16,7"/>
+            <line x1="21" y1="12" x2="9" y2="12"/>
+          </svg>
+        </button>
+      </header>
+
+      <div class="screen-content">
+        <!-- Today's period cards -->
+        <div class="period-row">
+          <div class="period-card" id="card-morning">
+            <div class="period-card-top">
+              <div class="period-icon-wrap">
+                <span class="period-emoji">🌅</span>
+              </div>
+              <div class="period-label-wrap">
+                <span class="period-name">Matin</span>
+                <span class="period-tag" id="tag-morning">Non enregistré</span>
+              </div>
+              <button class="period-record-btn" id="btn-record-morning" aria-label="Enregistrer mesure matin">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <line x1="12" y1="5" x2="12" y2="19"/>
+                  <line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+              </button>
+            </div>
+            <div class="period-values" id="values-morning">
+              <span class="period-empty-hint">Appuyez + pour enregistrer</span>
+            </div>
+          </div>
+
+          <div class="period-card" id="card-evening">
+            <div class="period-card-top">
+              <div class="period-icon-wrap">
+                <span class="period-emoji">🌙</span>
+              </div>
+              <div class="period-label-wrap">
+                <span class="period-name">Soir</span>
+                <span class="period-tag" id="tag-evening">Non enregistré</span>
+              </div>
+              <button class="period-record-btn" id="btn-record-evening" aria-label="Enregistrer mesure soir">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <line x1="12" y1="5" x2="12" y2="19"/>
+                  <line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+              </button>
+            </div>
+            <div class="period-values" id="values-evening">
+              <span class="period-empty-hint">Appuyez + pour enregistrer</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Weekly average summary -->
+        <div class="info-card" id="weekly-card">
+          <div class="info-card-title">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8">
+              <rect x="3" y="3" width="14" height="14" rx="2"/>
+              <path d="M3 8h14M8 3v14"/>
+            </svg>
+            Moyenne · semaine en cours
+          </div>
+          <div id="weekly-avg-content" class="muted-text">Chargement…</div>
+        </div>
+
+        <!-- BP tip -->
+        <div class="tip-card">
+          <p>💡 Prenez votre tension au repos, après 5 min assise, bras à hauteur du cœur.</p>
+        </div>
+      </div>
+    </div><!-- /screen-home -->
+
+
+    <!-- ── RECORD SCREEN ── -->
+    <div id="screen-record" class="screen hidden">
+      <header class="screen-header">
+        <button id="btn-back-record" class="icon-btn" aria-label="Retour">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+            <path d="M15 18l-6-6 6-6"/>
+          </svg>
+        </button>
+        <h2 class="header-title">Enregistrement</h2>
+        <div class="w-icon"></div>
+      </header>
+
+      <!-- Step 0 — Context -->
+      <div id="record-step-context" class="record-step screen-content">
+        <p class="step-section-label">Période</p>
+        <div class="period-toggle" id="period-toggle">
+          <button class="ptoggle-btn active" data-period="morning" id="toggle-morning">
+            <span>🌅</span> Matin
+          </button>
+          <button class="ptoggle-btn" data-period="evening" id="toggle-evening">
+            <span>🌙</span> Soir
+          </button>
+        </div>
+
+        <p class="step-section-label" style="margin-top:20px">Date</p>
+        <input type="date" id="record-date" class="date-input">
+
+        <div class="toggle-row" style="margin-top:20px">
+          <span class="toggle-row-label">Inclure le pouls</span>
+          <label class="switch">
+            <input type="checkbox" id="include-pulse" checked>
+            <span class="switch-slider"></span>
+          </label>
+        </div>
+
+        <button id="btn-start-record" class="btn-primary btn-full" style="margin-top:28px">
+          Commencer la saisie
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+            <path d="M8 4l6 6-6 6"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Step 1..N — Keypad -->
+      <div id="record-step-keypad" class="record-step hidden">
+        <div class="keypad-header">
+          <div class="keypad-progress-bar">
+            <div class="keypad-progress-fill" id="kp-progress-fill"></div>
+          </div>
+          <span class="keypad-progress-label" id="kp-progress-label"></span>
+        </div>
+
+        <div class="keypad-info">
+          <div class="keypad-reading-badge" id="kp-reading-badge">Lecture 1</div>
+          <div class="keypad-field-name" id="kp-field-name">Systolique</div>
+        </div>
+
+        <div class="keypad-display-area">
+          <div class="keypad-value-display" id="kp-value">—</div>
+          <div class="keypad-unit-display" id="kp-unit">mmHg</div>
+        </div>
+
+        <div class="keypad-hint" id="kp-hint">Valeur habituelle : 100–140</div>
+
+        <div class="keypad-grid">
+          <button class="key" data-key="1">1</button>
+          <button class="key" data-key="2">2</button>
+          <button class="key" data-key="3">3</button>
+          <button class="key" data-key="4">4</button>
+          <button class="key" data-key="5">5</button>
+          <button class="key" data-key="6">6</button>
+          <button class="key" data-key="7">7</button>
+          <button class="key" data-key="8">8</button>
+          <button class="key" data-key="9">9</button>
+          <button class="key key-action key-del" id="key-del" data-key="del">⌫</button>
+          <button class="key" data-key="0">0</button>
+          <button class="key key-action key-ok" id="key-ok" data-key="ok">✓</button>
+        </div>
+
+        <!-- Skip pulse button (only shown for pulse steps) -->
+        <button id="btn-skip-pulse" class="btn-ghost btn-full hidden" style="margin-top:8px">
+          Passer le pouls
+        </button>
+      </div>
+
+      <!-- Summary step -->
+      <div id="record-step-summary" class="record-step hidden screen-content">
+        <div class="summary-check-anim">
+          <div class="summary-check-circle">✓</div>
+        </div>
+        <h3 class="summary-title">Résumé de la mesure</h3>
+        <div id="summary-content"></div>
+        <button id="btn-save-record" class="btn-primary btn-full" style="margin-top:20px">
+          💾 Sauvegarder
+        </button>
+        <button id="btn-cancel-record" class="btn-ghost btn-full" style="margin-top:10px">
+          Annuler
+        </button>
+      </div>
+    </div><!-- /screen-record -->
+
+
+    <!-- ── HISTORY SCREEN ── -->
+    <div id="screen-history" class="screen hidden">
+      <header class="screen-header">
+        <h2 class="header-title">Historique</h2>
+        <button id="btn-export-csv" class="icon-btn" title="Exporter CSV" aria-label="Exporter CSV">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+            <polyline points="17,8 12,3 7,8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+        </button>
+      </header>
+      <div class="screen-content">
+        <div class="avg-tabs" role="tablist">
+          <button class="avg-tab active" data-avg-type="weekly" role="tab">Semaine</button>
+          <button class="avg-tab" data-avg-type="monthly" role="tab">Mois</button>
+          <button class="avg-tab" data-avg-type="daily" role="tab">Jour</button>
+        </div>
+        <div id="avg-box" class="avg-box"></div>
+        <div id="history-list" class="history-list"></div>
+      </div>
+    </div>
+
+
+    <!-- ── CHART SCREEN ── -->
+    <div id="screen-chart" class="screen hidden">
+      <header class="screen-header">
+        <h2 class="header-title">Évolution</h2>
+        <select id="chart-range" class="select-sm" aria-label="Période">
+          <option value="7">7 j</option>
+          <option value="14">14 j</option>
+          <option value="30" selected>30 j</option>
+          <option value="90">3 mois</option>
+        </select>
+      </header>
+      <div class="screen-content chart-scroll">
+        <div class="chart-legend">
+          <span class="legend-dot" style="background:#E05E44"></span><span>Systolique</span>
+          <span class="legend-dot" style="background:#2C7DB5; margin-left:16px"></span><span>Diastolique</span>
+        </div>
+        <div class="chart-wrapper">
+          <canvas id="bp-chart"></canvas>
+        </div>
+        <div class="chart-refs-card">
+          <div class="ref-row"><span class="ref-dot" style="background:#3D8F6F"></span><strong>Normal</strong> &lt; 120/80 mmHg</div>
+          <div class="ref-row"><span class="ref-dot" style="background:#E8A838"></span><strong>Élevé</strong> 120–129 / &lt; 80 mmHg</div>
+          <div class="ref-row"><span class="ref-dot" style="background:#E05E44"></span><strong>Hypertension</strong> ≥ 130/80 mmHg</div>
+        </div>
+        <div class="info-card" style="margin-top:14px">
+          <div class="info-card-title">Moyenne sur la période</div>
+          <div id="chart-period-avg" class="muted-text">—</div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ── SETTINGS SCREEN ── -->
+    <div id="screen-settings" class="screen hidden">
+      <header class="screen-header">
+        <h2 class="header-title">Réglages</h2>
+      </header>
+      <div class="screen-content">
+
+        <div class="settings-card">
+          <div class="settings-card-title">🔔 Rappels</div>
+          <div class="settings-row">
+            <span>Rappel matin</span>
+            <input type="time" id="reminder-morning" value="08:00" class="time-input">
+          </div>
+          <div class="settings-row">
+            <span>Rappel soir</span>
+            <input type="time" id="reminder-evening" value="20:00" class="time-input">
+          </div>
+          <button id="btn-enable-notifs" class="btn-secondary btn-full">
+            Activer / mettre à jour les rappels
+          </button>
+          <p class="settings-hint">Les rappels fonctionnent même quand l'app est en arrière-plan (Android). Sur iOS : ajoutez l'app à l'écran d'accueil.</p>
+        </div>
+
+        <div class="settings-card">
+          <div class="settings-card-title">📄 Rapport cardiologue</div>
+          <div class="settings-row">
+            <span>Période couverte</span>
+            <select id="report-range" class="select-sm">
+              <option value="7">7 jours</option>
+              <option value="30" selected>30 jours</option>
+              <option value="90">3 mois</option>
+              <option value="0">Tout</option>
+            </select>
+          </div>
+          <button id="btn-generate-report" class="btn-secondary btn-full">
+            Générer le rapport (PDF / impression)
+          </button>
+        </div>
+
+        <div class="settings-card settings-card-danger">
+          <div class="settings-card-title">⚠️ Zone dangereuse</div>
+          <button id="btn-delete-all" class="btn-danger btn-full">
+            Supprimer toutes les données
+          </button>
+        </div>
+
+        <p class="app-version">CardioLog · v1.0 · Firebase Firestore</p>
+      </div>
+    </div>
+
+
+    <!-- ── BOTTOM NAV ── -->
+    <nav class="bottom-nav" role="navigation" aria-label="Navigation principale">
+      <button class="nav-item active" data-nav="home" aria-label="Accueil">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
+          <polyline points="9,22 9,12 15,12 15,22"/>
+        </svg>
+        <span>Accueil</span>
+      </button>
+      <button class="nav-item" data-nav="history" aria-label="Historique">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+          <polyline points="14,2 14,8 20,8"/>
+          <line x1="16" y1="13" x2="8" y2="13"/>
+          <line x1="16" y1="17" x2="8" y2="17"/>
+        </svg>
+        <span>Historique</span>
+      </button>
+      <button class="nav-item nav-record-btn" data-nav="record" aria-label="Enregistrer">
+        <div class="nav-record-circle">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round">
+            <line x1="12" y1="5" x2="12" y2="19"/>
+            <line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+        </div>
+      </button>
+      <button class="nav-item" data-nav="chart" aria-label="Courbe">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <polyline points="22,12 18,12 15,21 9,3 6,12 2,12"/>
+        </svg>
+        <span>Courbe</span>
+      </button>
+      <button class="nav-item" data-nav="settings" aria-label="Réglages">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
+        </svg>
+        <span>Réglages</span>
+      </button>
+    </nav>
+
+  </div><!-- /app -->
+
+  <script src="firebase-config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
