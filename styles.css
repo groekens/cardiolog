@@ -90,6 +90,11 @@ html, body {
   overscroll-behavior: none;
 }
 
+/* Couvre la safe area en bas avec la couleur de la nav (blanc) */
+html {
+  background: var(--surface);
+}
+
 /* ── LOADING OVERLAY ── */
 .loading-overlay {
   position: fixed; inset: 0;
