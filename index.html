@@ -42,6 +42,22 @@
   <!-- ── TOAST ── -->
   <div id="toast" class="toast hidden"></div>
 
+  <!-- ── REPORT MODAL ── -->
+  <div id="report-modal" class="report-modal hidden">
+    <div class="report-modal-header">
+      <button id="btn-close-report" class="report-close-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+          <path d="M18 6L6 18M6 6l12 12"/>
+        </svg>
+        Fermer
+      </button>
+      <button id="btn-print-report" class="report-print-btn">
+        🖨️ Imprimer / PDF
+      </button>
+    </div>
+    <iframe id="report-iframe" class="report-iframe"></iframe>
+  </div>
+
   <!-- ── FIREBASE ERROR MODAL ── -->
   <div id="firebase-error-modal" class="fb-modal hidden">
     <div class="fb-modal-box">
@@ -212,7 +228,7 @@
         <div class="toggle-row" style="margin-top:20px">
           <span class="toggle-row-label">Inclure le pouls</span>
           <label class="switch">
-            <input type="checkbox" id="include-pulse" checked>
+            <input type="checkbox" id="include-pulse">
             <span class="switch-slider"></span>
           </label>
         </div>
