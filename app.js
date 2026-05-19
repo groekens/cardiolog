@@ -364,9 +364,11 @@ function renderPeriodCard(period, entry) {
 
 function renderWeeklyAvg() {
   const weekKey = getWeekKey(todayISO());
+  // Protocole : seule la 2e mesure (r2) est retenue, r1 à titre informatif uniquement
   const weekReadings = allReadings
     .filter(e => getWeekKey(e.date) === weekKey)
-    .flatMap(e => [e.r1, e.r2].filter(Boolean));
+    .map(e => (e.r2 && e.r2.sys) ? e.r2 : (e.r1 && e.r1.sys ? e.r1 : null))
+    .filter(Boolean);
   const avg = avgReadings(weekReadings);
 
   const el = $('weekly-avg-content');
@@ -1012,7 +1014,9 @@ function generateReport() {
     return;
   }
 
-  const allFlat = data.flatMap(e => [e.r1, e.r2].filter(Boolean));
+  const allFlat = data
+    .map(e => (e.r2 && e.r2.sys) ? e.r2 : (e.r1 && e.r1.sys ? e.r1 : null))
+    .filter(Boolean);
   const globalAvg = avgReadings(allFlat);
   const cat = globalAvg ? bpCategory(globalAvg.sys, globalAvg.dia) : null;
 
