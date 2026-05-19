@@ -27,10 +27,52 @@
   --radius-sm:   8px;
   --nav-h:       70px;
   --header-h:    60px;
-  --safe-bottom: env(safe-area-inset-bottom, 0px);
-  --safe-top:    env(safe-area-inset-top, 0px);
   --font-display: 'Playfair Display', Georgia, serif;
   --font-ui:      'Nunito', system-ui, sans-serif;
+}
+
+/* ── FIREBASE ERROR MODAL ── */
+.fb-modal {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.55);
+  z-index: 8000;
+  display: flex; align-items: center; justify-content: center;
+  padding: 24px;
+  backdrop-filter: blur(4px);
+}
+.fb-modal.hidden { display: none; }
+.fb-modal-box {
+  background: var(--surface);
+  border-radius: 18px;
+  padding: 24px;
+  width: 100%; max-width: 360px;
+  box-shadow: var(--shadow-lg);
+}
+.fb-modal-title {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--primary);
+  margin-bottom: 10px;
+}
+.fb-modal-msg {
+  font-size: 0.85rem;
+  color: var(--text-2);
+  line-height: 1.5;
+  margin-bottom: 10px;
+}
+.fb-url-box {
+  background: var(--surface-2);
+  border-radius: 8px;
+  padding: 10px;
+  font-size: 0.7rem;
+  color: var(--primary);
+  word-break: break-all;
+  line-height: 1.5;
+  border: 1px solid var(--border);
+  max-height: 100px;
+  overflow-y: auto;
+  user-select: all;
+  -webkit-user-select: all;
 }
 
 /* ── RESET & BASE ── */
@@ -70,7 +112,7 @@ html, body {
 /* ── TOAST ── */
 .toast {
   position: fixed;
-  bottom: calc(var(--nav-h) + var(--safe-bottom) + 12px);
+  bottom: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px) + 12px);
   left: 50%; transform: translateX(-50%);
   background: var(--primary);
   color: white;
@@ -109,8 +151,8 @@ html, body {
 
 .screen {
   position: absolute; inset: 0;
-  top: calc(var(--header-h) + var(--safe-top));
-  bottom: calc(var(--nav-h) + var(--safe-bottom));
+  top: calc(var(--header-h) + env(safe-area-inset-top, 0px));
+  bottom: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px));
   overflow: hidden;
   display: flex; flex-direction: column;
   transition: opacity 0.2s ease;
@@ -121,15 +163,15 @@ html, body {
 .screen-content {
   flex: 1;
   overflow-y: auto;
-  padding: 16px 16px calc(16px + var(--safe-bottom));
+  padding: 16px 16px calc(16px + env(safe-area-inset-bottom, 0px));
   -webkit-overflow-scrolling: touch;
 }
 
 /* ── SCREEN HEADER ── */
 .screen-header {
   position: fixed; top: 0; left: 0; right: 0;
-  height: calc(var(--header-h) + var(--safe-top));
-  padding-top: var(--safe-top);
+  height: calc(var(--header-h) + env(safe-area-inset-top, 0px));
+  padding-top: env(safe-area-inset-top, 0px);
   background: var(--bg);
   border-bottom: 1px solid var(--border);
   display: flex; align-items: center;
@@ -179,8 +221,8 @@ html, body {
 .bottom-nav {
   position: fixed;
   bottom: 0; left: 0; right: 0;
-  height: calc(var(--nav-h) + var(--safe-bottom));
-  padding-bottom: var(--safe-bottom);
+  height: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px));
+  padding-bottom: env(safe-area-inset-bottom, 0px);
   background: var(--surface);
   border-top: 1px solid var(--border);
   display: flex; align-items: center;
