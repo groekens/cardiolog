@@ -24,12 +24,12 @@ let bpChartInst   = null;
 // Keypad state machine
 const kpState = {
   active: false,
-  period: 'morning',  // 'morning' | 'evening'
+  period: 'morning',
   date:   '',
-  includePulse: true,
-  readings: [],       // [{sys, dia, pulse}]
-  step: 0,            // which reading (0=first, 1=second)
-  field: 'sys',       // 'sys' | 'dia' | 'pulse'
+  includePulse: false,  // décoché par défaut
+  readings: [],
+  step: 0,
+  field: 'sys',
   value: '',
 };
 
@@ -90,8 +90,12 @@ function avgReadings(readings) {
 }
 
 function avgEntry(entry) {
-  const rr = [entry.r1, entry.r2].filter(Boolean);
-  return avgReadings(rr);
+  // Protocole médical : seule la 2e mesure est retenue pour les moyennes
+  // La 1ère mesure est affichée à titre informatif uniquement
+  if (entry.r2 && entry.r2.sys) return entry.r2;
+  // Fallback sur r1 si r2 absent (entrée incomplète)
+  if (entry.r1 && entry.r1.sys) return entry.r1;
+  return null;
 }
 
 // Parse "YYYY-WNN" → display label
@@ -143,14 +147,20 @@ function bpHtml(sys, dia, pulse) {
 async function loadReadings() {
   if (!currentUser) return;
   try {
+    // Single orderBy avoids requiring a composite Firestore index
     const snap = await db.collection('readings')
       .where('uid', '==', currentUser.uid)
       .orderBy('date', 'desc')
-      .orderBy('period', 'desc')
       .get();
     allReadings = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    // Sort period client-side within same day
+    allReadings.sort((a, b) => {
+      if (b.date !== a.date) return b.date.localeCompare(a.date);
+      return b.period.localeCompare(a.period);
+    });
   } catch (e) {
     console.error('loadReadings error:', e);
+    showToast('Erreur chargement : ' + e.message, 'error');
     allReadings = [];
   }
 }
@@ -364,9 +374,14 @@ window.confirmDeleteEntry = async (id) => {
 // reading 1 & 2
 
 function initRecordScreen() {
-  // Nav buttons to open record from home cards
-  $('btn-record-morning').addEventListener('click', () => openRecord('morning'));
-  $('btn-record-evening').addEventListener('click', () => openRecord('evening'));
+  // Whole card clickable (not just the + button)
+  $('card-morning').addEventListener('click', (e) => {
+    if (!e.target.closest('.btn-delete-reading')) openRecord('morning');
+  });
+  $('card-evening').addEventListener('click', (e) => {
+    if (!e.target.closest('.btn-delete-reading')) openRecord('evening');
+  });
+  // Keep + buttons working too (they bubble up to card handler above)
   $('btn-back-record').addEventListener('click', closeRecord);
 
   // Period toggle
@@ -635,18 +650,22 @@ function renderAvgBox(type) {
     allReadings.forEach(e => {
       const k = getWeekKey(e.date);
       if (!groups[k]) groups[k] = [];
-      [e.r1, e.r2].filter(Boolean).forEach(r => groups[k].push(r));
+      // Protocole : seule la 2e mesure compte
+      const ref = (e.r2 && e.r2.sys) ? e.r2 : (e.r1 && e.r1.sys ? e.r1 : null);
+      if (ref) groups[k].push(ref);
     });
   } else if (type === 'monthly') {
     allReadings.forEach(e => {
       const k = getMonthKey(e.date);
       if (!groups[k]) groups[k] = [];
-      [e.r1, e.r2].filter(Boolean).forEach(r => groups[k].push(r));
+      const ref = (e.r2 && e.r2.sys) ? e.r2 : (e.r1 && e.r1.sys ? e.r1 : null);
+      if (ref) groups[k].push(ref);
     });
   } else {
     allReadings.forEach(e => {
       if (!groups[e.date]) groups[e.date] = [];
-      [e.r1, e.r2].filter(Boolean).forEach(r => groups[e.date].push(r));
+      const ref = (e.r2 && e.r2.sys) ? e.r2 : (e.r1 && e.r1.sys ? e.r1 : null);
+      if (ref) groups[e.date].push(ref);
     });
   }
 
@@ -746,27 +765,29 @@ function renderChart() {
   // Group by date → daily avg (both periods)
   const byDate = {};
   filtered.forEach(e => {
+    const ref = (e.r2 && e.r2.sys) ? e.r2 : (e.r1 && e.r1.sys ? e.r1 : null);
+    if (!ref) return;
     if (!byDate[e.date]) byDate[e.date] = [];
-    [e.r1, e.r2].filter(Boolean).forEach(r => byDate[e.date].push(r));
+    byDate[e.date].push(ref);
   });
 
+  // Also for period avg
+  const allFlat = filtered.map(e =>
+    (e.r2 && e.r2.sys) ? e.r2 : (e.r1 && e.r1.sys ? e.r1 : null)
+  ).filter(Boolean);
+
+  // Build chart series from grouped data
   const labels = Object.keys(byDate).sort();
   const sysData = [], diaData = [];
-
   labels.forEach(d => {
     const avg = avgReadings(byDate[d]);
     sysData.push(avg ? avg.sys : null);
     diaData.push(avg ? avg.dia : null);
   });
-
-  // Short date labels
   const shortLabels = labels.map(d => {
     const [, m, day] = d.split('-');
     return `${+day}/${+m}`;
   });
-
-  // Period avg for info card
-  const allFlat = filtered.flatMap(e => [e.r1, e.r2].filter(Boolean));
   const periodAvg = avgReadings(allFlat);
   if (periodAvg) {
     const cat = bpCategory(periodAvg.sys, periodAvg.dia);
