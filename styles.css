@@ -225,14 +225,15 @@ html, body {
   padding-bottom: env(safe-area-inset-bottom, 0px);
   background: var(--surface);
   border-top: 1px solid var(--border);
-  display: flex; align-items: center;
+  display: flex;
+  align-items: flex-start; /* items s'alignent en haut, padding-bottom = zone home indicator */
   z-index: 200;
   box-shadow: 0 -2px 12px rgba(0,0,0,0.06);
 }
 
 .nav-item {
   flex: 1;
-  height: 100%;
+  height: var(--nav-h); /* hauteur fixe, indépendante de la safe area */
   border: none;
   background: none;
   display: flex; flex-direction: column;
