@@ -1117,10 +1117,18 @@ ${globalAvg ? `
 </body>
 </html>`;
 
-  const w = window.open('', '_blank');
-  w.document.write(html);
-  w.document.close();
-  setTimeout(() => w.print(), 500);
+  // Afficher dans la modale in-app (pas de nouvelle fenêtre → fonctionne sur iOS PWA)
+  const iframe = $('report-iframe');
+  iframe.srcdoc = html;
+  $('report-modal').classList.remove('hidden');
+
+  $('btn-close-report').onclick = () => {
+    $('report-modal').classList.add('hidden');
+  };
+  $('btn-print-report').onclick = () => {
+    iframe.contentWindow.focus();
+    iframe.contentWindow.print();
+  };
 }
 
 // ══════════════════════════════════════════════════
