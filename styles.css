@@ -413,8 +413,15 @@ html, body {
   padding: 14px;
   box-shadow: var(--shadow-sm);
   border: 1.5px solid var(--border);
-  transition: border-color 0.2s;
+  transition: border-color 0.2s, transform 0.15s, box-shadow 0.15s;
   min-width: 0;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.period-card:active {
+  transform: scale(0.97);
+  box-shadow: none;
 }
 .period-card.card-done { border-color: rgba(61, 143, 111, 0.35); }
 
