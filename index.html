@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#1A3A5C">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -41,6 +41,20 @@
 
   <!-- ── TOAST ── -->
   <div id="toast" class="toast hidden"></div>
+
+  <!-- ── FIREBASE ERROR MODAL ── -->
+  <div id="firebase-error-modal" class="fb-modal hidden">
+    <div class="fb-modal-box">
+      <div class="fb-modal-title">⚠️ Erreur Firebase</div>
+      <p class="fb-modal-msg" id="fb-error-msg"></p>
+      <div class="fb-modal-url-wrap" id="fb-error-url-wrap" style="display:none">
+        <p style="font-size:0.75rem;color:var(--text-3);margin-bottom:6px">Ouvre ce lien pour créer l'index manquant :</p>
+        <div class="fb-url-box" id="fb-error-url"></div>
+        <button class="btn-secondary" style="margin-top:10px;width:100%" id="btn-copy-fb-url">📋 Copier le lien</button>
+      </div>
+      <button class="btn-ghost" style="margin-top:12px;width:100%" id="btn-close-fb-modal">Fermer</button>
+    </div>
+  </div>
 
   <!-- ════════════════════════════════
        LOGIN SCREEN
