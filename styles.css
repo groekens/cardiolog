@@ -135,11 +135,48 @@ html, body {
   to   { opacity: 1; transform: translateX(-50%) translateY(0); }
 }
 
+/* ── REPORT MODAL ── */
+.report-modal {
+  position: fixed; inset: 0;
+  z-index: 7000;
+  display: flex; flex-direction: column;
+  background: white;
+}
+.report-modal.hidden { display: none; }
+.report-modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: calc(12px + env(safe-area-inset-top, 0px)) 16px 12px;
+  background: var(--primary);
+  flex-shrink: 0;
+  gap: 10px;
+}
+.report-close-btn {
+  display: flex; align-items: center; gap: 6px;
+  background: rgba(255,255,255,0.15);
+  border: none; border-radius: 8px;
+  color: white; font-family: var(--font-ui);
+  font-size: 0.9rem; font-weight: 700;
+  padding: 8px 14px; cursor: pointer;
+}
+.report-close-btn svg { width: 16px; height: 16px; }
+.report-print-btn {
+  background: var(--accent);
+  border: none; border-radius: 8px;
+  color: white; font-family: var(--font-ui);
+  font-size: 0.9rem; font-weight: 700;
+  padding: 8px 14px; cursor: pointer;
+}
+.report-iframe {
+  flex: 1; border: none; width: 100%;
+}
+
 /* ── SCREEN LAYOUT ── */
 .screen-full {
   position: fixed; inset: 0;
   z-index: 100;
   overflow-y: auto;
+  /* Force background to cover safe areas on iPhone X */
+  background: #0D2240;
 }
 .screen-full.hidden { display: none; }
 
@@ -287,7 +324,7 @@ html, body {
   min-height: 100%;
   display: flex; flex-direction: column;
   align-items: center; justify-content: center;
-  padding: 40px 24px;
+  padding: calc(40px + env(safe-area-inset-top, 0px)) 24px calc(40px + env(safe-area-inset-bottom, 0px));
   gap: 36px;
 }
 
