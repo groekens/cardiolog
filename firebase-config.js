@@ -5,12 +5,12 @@
 // ══════════════════════════════════════════════════
 
 const FIREBASE_CONFIG = {
-  apiKey:            "REMPLACE_PAR_TON_API_KEY",
-  authDomain:        "REMPLACE_PAR_TON_AUTH_DOMAIN",
-  projectId:         "REMPLACE_PAR_TON_PROJECT_ID",
-  storageBucket:     "REMPLACE_PAR_TON_STORAGE_BUCKET",
-  messagingSenderId: "REMPLACE_PAR_TON_SENDER_ID",
-  appId:             "REMPLACE_PAR_TON_APP_ID"
+  apiKey: "AIzaSyDcWLVGbq_zB653IPkQ62AX1Rc9Qn4VBMU",
+  authDomain: "cardiolog-app.firebaseapp.com",
+  projectId: "cardiolog-app",
+  storageBucket: "cardiolog-app.firebasestorage.app",
+  messagingSenderId: "384172695433",
+  appId: "1:384172695433:web:9059f2a5a0aa1b14530b58"
 };
 
 // Initialize Firebase
