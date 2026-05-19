@@ -141,26 +141,59 @@ function bpHtml(sys, dia, pulse) {
   return html;
 }
 
+// ── FIREBASE ERROR MODAL ────────────────────────
+function showFirebaseError(message, url) {
+  $('fb-error-msg').textContent = message;
+  if (url) {
+    $('fb-error-url').textContent = url;
+    $('fb-error-url-wrap').style.display = 'block';
+    $('btn-copy-fb-url').onclick = () => {
+      navigator.clipboard.writeText(url).then(() => {
+        showToast('✓ Lien copié !', 'success');
+      }).catch(() => {
+        // Fallback: select the text
+        const el = $('fb-error-url');
+        const range = document.createRange();
+        range.selectNodeContents(el);
+        window.getSelection().removeAllRanges();
+        window.getSelection().addRange(range);
+        showToast('Sélectionne le texte puis copie', 'info');
+      });
+    };
+  } else {
+    $('fb-error-url-wrap').style.display = 'none';
+  }
+  $('firebase-error-modal').classList.remove('hidden');
+  $('btn-close-fb-modal').onclick = () => {
+    $('firebase-error-modal').classList.add('hidden');
+  };
+}
+
 // ══════════════════════════════════════════════════
 //  FIREBASE CRUD
 // ══════════════════════════════════════════════════
 async function loadReadings() {
   if (!currentUser) return;
   try {
-    // Single orderBy avoids requiring a composite Firestore index
     const snap = await db.collection('readings')
       .where('uid', '==', currentUser.uid)
       .orderBy('date', 'desc')
       .get();
     allReadings = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    // Sort period client-side within same day
     allReadings.sort((a, b) => {
       if (b.date !== a.date) return b.date.localeCompare(a.date);
       return b.period.localeCompare(a.period);
     });
   } catch (e) {
     console.error('loadReadings error:', e);
-    showToast('Erreur chargement : ' + e.message, 'error');
+    // Extract Firebase index URL from error message if present
+    const urlMatch = e.message && e.message.match(/https:\/\/console\.firebase\.google\.com[^\s"]+/);
+    const indexUrl = urlMatch ? urlMatch[0] : null;
+    showFirebaseError(
+      'Erreur lors du chargement des données Firestore.\n' +
+      (indexUrl ? 'Un index manquant doit être créé — copie le lien ci-dessous et ouvre-le dans un navigateur.' : e.message),
+      indexUrl
+    );
     allReadings = [];
   }
 }
