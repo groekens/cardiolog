@@ -3,7 +3,7 @@
    Service Worker : cache offline + rappels quotidiens
    ══════════════════════════════════════════════════ */
 
-const CACHE_NAME = 'cardiolog-v1';
+const CACHE_NAME = 'cardiolog-v2';
 const ASSETS = [
   './',
   './index.html',
